@@ -2,11 +2,12 @@ import unittest
 from .. import create_app
 from ..config.config import config_dict
 from ..utility import db
+from http import HTTPStatus
 from werkzeug.security import generate_password_hash
 from ..models.students import Student
 from flask_jwt_extended import create_access_token
 
-class OrderTestCase(unittest.TestCase):
+class StudentTestCase(unittest.TestCase):
     
     def setUp(self):
 
@@ -31,9 +32,11 @@ class OrderTestCase(unittest.TestCase):
  
         self.client = None
 
-    def test_all_student_routes(self):
+    def test_get_all_students(self):
 
-        token = create_access_token(identity='testuser')
+        student = Student.query.filter_by(email='testuser@gmail.com').first()
+
+        token = create_access_token(identity=student)
 
         headers = {
             "Authorization": f"Bearer {token}"
@@ -45,25 +48,98 @@ class OrderTestCase(unittest.TestCase):
 
         assert response.json == []
         
+        
+        # Get student by ID
+    def test_get_student_byid(self):
+        
+        student = Student.query.filter_by(email='testuser@gmail.com').first()
 
-
-        data = {
-            "size": "SMALL",
-            "quantity": 1,
-            "flavour": "Pepperoni"
-        }
-
-        token = create_access_token(identity='testuser')
+        token = create_access_token(identity=student)
 
         headers = {
             "Authorization": f"Bearer {token}"
         }
 
-        response = self.client.post('/orders/orders', json=data, headers=headers)
+        response = self.client.get('/student/student/1', headers=headers)
 
-        assert response.status_code == 201
+        assert response.status_code == 200
+        
+        
+    # Get a student's grades
+    def test_get_student_grades(self):
+        
+        student = Student.query.filter_by(email='testuser@gmail.com').first()
 
-        students = Student.query.all()
+        token = create_access_token(identity=student)
 
-        assert len(students) == 1
-        assert response.status_code == 404
+        headers = {
+            "Authorization": f"Bearer {token}"
+        }
+
+        response = self.client.get('/student/student/1/grades', headers=headers)
+
+        assert response.status_code == 200
+        
+        
+    # Get a student's courses
+    def test_get_student_courses(self):
+        
+        student = Student.query.filter_by(email='testuser@gmail.com').first()
+
+        token = create_access_token(identity=student)
+
+        headers = {
+            "Authorization": f"Bearer {token}"
+        }
+
+        response = self.client.get('/student/student/1/courses', headers=headers)
+
+        assert response.status_code == 200
+        
+        
+        
+    # Admin deletes a student
+    def test_admin_deletes_student(self):
+
+        student = Student(
+            first_name='Test',
+            last_name='Tester',
+            email='testuser@gmail.com',
+            student_password='password'
+        )
+        student.save()
+        
+        token = create_access_token(identity=student.email)
+
+        self.return_value = student.email
+        
+        response = self.client.delete('/student/student/1', headers={'Authorization': f'Bearer {token}'})
+
+        assert response.status_code == 200
+        
+    
+    # Admin updates a student
+    def test_admin_updates_student(self):
+
+        student = Student(
+            first_name='Test',
+            last_name='Tester',
+            email='testuser@gmail.com',
+            student_password='password'
+        )
+        student.save()
+        
+        token = create_access_token(identity=student.email)
+
+        self.return_value = student.email
+        
+        
+        data = {
+            'first_name': 'Testers',
+            'last_name': 'Tests',
+            'email': 'testuser@gmail.com'
+        }
+        
+        response = self.client.put('/student/student/1',json=data, headers={'Authorization': f'Bearer {token}'})
+
+        assert response.status_code == 200

@@ -37,8 +37,9 @@ class UserTestCase(unittest.TestCase):
     def test_user_registration(self):
 
         data = {
-            "first_name": "Kelvin",
-            "last_name": "John",
+            "id": 1,
+            "first_name": "Test",
+            "last_name": "Tester",
             "email": "testuser@gmail.com",
             "student_password": "password"
         }
@@ -50,6 +51,8 @@ class UserTestCase(unittest.TestCase):
         assert user.email == "testuser@gmail.com"
 
         assert response.status_code == 201
+        
+        
         
     def test_user_login(self):
         data = {
