@@ -9,6 +9,7 @@ class Student(db.Model):
     last_name = db.Column(db.String(50), nullable=False)
     email = db.Column(db.String(120), nullable=False, unique=True)
     student_password = db.Column(db.Text(), nullable=False)
+    student_gpa = db.Column(db.Float())
     courses = db.relationship('Course', secondary='registrations')
     grade = db.relationship('Grade', backref='student')
 

@@ -6,7 +6,7 @@ class Course(db.Model):
 
     id = db.Column(db.Integer(), primary_key=True)
     course_name = db.Column(db.String(50), nullable=False)
-    course_unit = db.Column(db.Integer(), default=8)
+    course_unit = db.Column(db.Integer(), nullable=False)
     course_teacher = db.Column(db.String(30), nullable=False)
     courses = db.relationship('Student', secondary='registrations')
     grade = db.relationship('Grade', backref='course')

@@ -9,9 +9,8 @@ class Grade(db.Model):
     last_name = db.Column(db.String(50))
     student_email = db.Column(db.String(50), unique=False)
     course_name = db.Column(db.String(50), nullable=True)
-    student_grade = db.Column(db.Integer(), nullable=True)
-    course_unit = db.Column(db.Integer, default=8)
-    student_gpa = db.Column(db.Float())
+    student_grade = db.Column(db.Integer(), nullable=False)
+    course_unit = db.Column(db.Integer, nullable=False)
     student_id = db.Column(db.Integer(), db.ForeignKey('students.id'), nullable=False)
     course_id = db.Column(db.Integer(), db.ForeignKey('courses.id'), nullable=False)
 

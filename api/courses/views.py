@@ -10,12 +10,13 @@ from ..utility import db
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
 
-course_namespace = Namespace('courses', description='name space for courses')
+course_namespace = Namespace('courses', description='Namespace for courses')
 
 admin_course_reg_model = course_namespace.model(
     'CourseExpect', {
         'course_name': fields.String(description='Course name', required=True),
-        'course_teacher': fields.String(description='Course teacher', required=True)
+        'course_teacher': fields.String(description='Course teacher', required=True),
+        'course_unit': fields.Integer(description='Course unit', required=True),
     }
 )
 
@@ -24,8 +25,8 @@ course_model = course_namespace.model(
     'CourseModel', {
         'id' : fields.Integer(description='Database id of a course'),
         'course_name': fields.String(description='Course name'),
-        'course_unit': fields.Integer(description='Course unit'),
         'course_teacher': fields.String(description='Course teacher'),
+        'course_unit': fields.Integer(description='Course unit')
     }
 )
 
@@ -42,30 +43,16 @@ student_course_model = course_namespace.model(
 )
 
 grade_model = course_namespace.model(
-    'StudentGrades',{
+    'StudentGradesEntry',{
         'last_name': fields.String(description='Last name of the student', required=True,),
         'student_email': fields.String(description='name of student', required=True,),
         'course_name': fields.String(description='Name of the course', required=True),
-        'course_unit': fields.Integer(description="Unit of the course", default=8, required=True),
+        'course_unit': fields.Integer(description="Unit of the course", required=True),
         'student_grade' : fields.Integer(description="Grade of the student", required=True),
         'student_id': fields.Integer(description="Student ID", required=True),
         'course_id': fields.Integer(description="Course ID", required=True),                     
     }
 )
-
-
-grades_model = course_namespace.model(
-    'GradesOfStudents', {
-        'last_name': fields.String(description='Last name of the student', required=True,),
-        'student_email': fields.String(description='name of student', required=True,),
-        'course_unit': fields.Integer(description="Unit of the course", required=True),
-        'course_name': fields.String(description="Name of the course", required=True),
-        'student_grade' : fields.Integer(description="Grade of the student", required=True),
-        'student_id': fields.Integer(description='ID of student'),
-        'student_id': fields.Integer(description='ID of student') 
-    }
-)
-
 
 
 @course_namespace.route('/course/course_reg')
@@ -85,13 +72,19 @@ class AdminCourseReg(Resource):
         email = get_jwt_identity()
 
         current_user = Student.query.filter_by(email=email).first()
-
-        if current_user == current_user:
+        
+        
+        if current_user.id != 1:
+            return {'Message': 'You do not have access'}
+        
+        
+        else:
 
             data = course_namespace.payload
 
             new_course = Course(
                 course_name = data.get('course_name'),
+                course_unit = data.get('course_unit'),
                 course_teacher = data.get('course_teacher'),
             )
 
@@ -113,8 +106,11 @@ class GetAllCourses(Resource):
         """
             Get all courses
         """
-
-        courses = Course.query.all()
+        try:
+            courses = Course.query.all()
+            
+        except:
+            return {'Message':"Could not get all students"}
 
         return courses, HTTPStatus.OK
     
@@ -133,8 +129,11 @@ class GetCourse(Resource):
         """
             Get a course by ID
         """
-        
-        course = Course.get_by_id(course_id)
+        try:
+            course = Course.get_by_id(course_id)
+            
+        except:
+            return {'Message':"Could not get all student"}
         
         return course, HTTPStatus.OK
 
@@ -151,7 +150,12 @@ class GetAllCourseStudents(Resource):
         """
             Get all students of a specific course
         """
-        course = Registration.query.filter_by(course_id=course_id).all()
+        
+        try:
+            course = Registration.query.filter_by(course_id=course_id).all()
+            
+        except:
+            return {'Message':"Could not get students"}
 
         # Database relationship reference
         #students = course.student
@@ -163,7 +167,7 @@ class GetAllCourseStudents(Resource):
 @course_namespace.route("/course/<int:course_id>/students/grades")
 class GetAllStudentsGrades(Resource):
 
-    @course_namespace.marshal_with(grades_model)
+    @course_namespace.marshal_with(grade_model)
     @course_namespace.doc(description="Get grades of all students of a specific course",
                          params={'course_id' :'A ccourse ID to get all students'})
     @jwt_required()
@@ -173,7 +177,13 @@ class GetAllStudentsGrades(Resource):
         """
         #course_id = Registration.get_by_id(course_id)
         
-        student_grades = Grade.query.filter_by(course_id=course_id).all()
+        
+        try:
+            student_grades = Grade.query.filter_by(course_id=course_id).all()
+            
+        
+        except:
+            return {'Message':"Could not get student grades"}
         
         
 
@@ -204,29 +214,35 @@ class StudentCourseReg(Resource):
         email = get_jwt_identity()
 
         current_user = Student.query.filter_by(email=email).first()
+        
+        data = course_namespace.payload
 
-        if current_user == current_user:
+        student_id = data.get('student_id')
+        
+        student = Student.query.filter_by(id=student_id).first()
+        
+        if not student:
+            return {'message': 'Invalid student ID'}, HTTPStatus.BAD_REQUEST
 
-            data = course_namespace.payload
 
-            new_course_reg = Registration(
-                last_name = data.get('last_name'),
-                course_name = data.get('course_name'),
-                student_email = data.get('student_email'),
-                student_id = data.get('student_id'),
-                course_id = data.get('course_id')
-            )
+        new_course_reg = Registration(
+            last_name = data.get('last_name'),
+            course_name = data.get('course_name'),
+            student_email = data.get('student_email'),
+            student_id = data.get('student_id'),
+            course_id = data.get('course_id')
+        )
             
             
-            new_course_reg.student = current_user
+        new_course_reg.student = current_user
     
-            new_course_reg.save()
+        new_course_reg.save()
 
-            return new_course_reg, HTTPStatus.CREATED
+        return new_course_reg, HTTPStatus.CREATED
         
         
-@course_namespace.route('/Course/grade_entry')
-class CourseReg(Resource):
+@course_namespace.route('/course/grade_entry')
+class AdminGradeEntry(Resource):
    
    @course_namespace.expect(grade_model)
    @course_namespace.marshal_with(grade_model)
@@ -243,21 +259,28 @@ class CourseReg(Resource):
         email = get_jwt_identity()
 
         current_user = Student.query.filter_by(email=email).first()
+        
+        if current_user.id != 1:
+            return {'Message': 'You do not have access'}
+        
+        
+        
+        else:
+            data = course_namespace.payload
 
-        data = course_namespace.payload
+            grade_entry = Grade(
+                last_name = data.get('last_name'),
+                student_email = data.get('student_email'),
+                course_name = data.get('course_name'),
+                student_grade = data.get('student_grade'),
+                course_unit = data.get('course_unit'),
+                student_id = data.get('student_id'),
+                course_id = data.get('course_id')
+            )
 
-        grade_entry = Grade(
-            last_name = data.get('last_name'),
-            student_email = data.get('student_email'),
-            course_name = data.get('course_name'),
-            student_grade = data.get('student_grade'),
-            student_id = data.get('student_id'),
-            course_id = data.get('course_id')
-        )
-
-        grade_entry.student = current_user
+            grade_entry.student = current_user
     
-        grade_entry.save()
+            grade_entry.save()
 
-        return grade_entry, HTTPStatus.CREATED
+            return grade_entry, HTTPStatus.CREATED
     

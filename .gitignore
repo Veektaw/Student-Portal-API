@@ -1,0 +1,21 @@
+**/wwwroot/umbraco/
+
+# SQLite files
+*.sqlite.db*
+
+#ignore umbraco data/views/settings
+**/umbraco/
+
+#include default location for modelsbuilder output
+!**/umbraco/models
+
+#include default location for packages
+!**/umbraco/Data/packages
+!**/umbraco/Data/packages
+
+env/
+instance/
+__pycache__
+*pyc
+.DS_Store
+.env

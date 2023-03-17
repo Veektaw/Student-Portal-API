@@ -10,8 +10,7 @@ from ..utility import db
 from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, get_jwt_identity
 
 
-student_namespace = Namespace('students', description='Name space for students')
-grade_namespace = Namespace('grades', description='Name space for grades')
+student_namespace = Namespace('students', description='Namespace for students')
 
 student_model = student_namespace.model(
     'Student',{
@@ -24,14 +23,27 @@ student_model = student_namespace.model(
 )
 
 
-grade_model = grade_namespace.model(
+student_model_GPA = student_namespace.model(
+    'Student',{
+        'id': fields.Integer(description='An order ID'),
+        'first_name': fields.String(description='First name of the student', required=True,),
+        'last_name': fields.String(description='Last name of the student', required=True),
+        'email': fields.String(description="Email of student", required=True),
+        'student_gpa': fields.Float(description='GPA of the student'),
+        'student_password': fields.String(description='Password of student', required=True)                          
+    }
+)
+
+
+
+
+grade_model = student_namespace.model(
     'StudentGrades',{
         'last_name': fields.String(description='Last name of the student', required=True,),
         'student_email': fields.String(description='name of student', required=True,),
         'course_unit': fields.Integer(description="Unit of the course", required=True),
         'course_name': fields.String(description="Name of the course", required=True),
         'student_grade' : fields.Integer(description="Grade of the student", required=True),
-        'student_gpa': fields.Float(description='Student GPA'),
         'student_id': fields.Integer(description='ID of student')         
     }
 )
@@ -72,9 +84,12 @@ class StudentGetCreate(Resource):
         """
             Get all students
         """
-
-        students = Student.query.all()
-
+        try:
+            students = Student.query.all()
+            
+        except:
+            return {'Message':"Could not get all students"}
+        
         return students, HTTPStatus.OK
 
 
@@ -83,17 +98,45 @@ class StudentGetCreate(Resource):
 @student_namespace.route("/student/<int:student_id>")
 class GetUpdateDelete(Resource):
 
-    @student_namespace.marshal_with(student_model)
+    @student_namespace.marshal_with(student_model_GPA)
     @student_namespace.doc(description="Get a student by ID",
                            params={'student_id' :'An ID of the student'})
     @jwt_required()
     def get(self, student_id):
         
         """
-            Get a particular student
+            Get a particular student, this includes the GPA of said student
         """
+        try:
+            
+            email = get_jwt_identity()
+
+            current_user = Student.query.filter_by(email=email).first()
+            
+            student = Student.get_by_id(student_id)
+            
+            
+            if current_user == current_user:
         
-        student = Student.get_by_id(student_id)
+                grades = Grade.query.filter_by(student_id=student_id).all()
+
+                total_course_units = sum([grade.course_unit for grade in grades])
+                total_grade_points = sum([grade.student_grade * grade.course_unit for grade in grades])
+
+                student_gpa = total_grade_points / total_course_units if total_course_units > 0 else 0
+
+                for grade in grades:
+                    grade = Student.query.filter_by(email=email).first()
+                    grade.student_gpa = student_gpa
+                    db.session.add(grade)
+                    db.session.commit()
+            else:
+                return {'Message':"You do not have access"}
+                    
+        
+            
+        except:
+            return {'Message':"Could not get this student"}
         
         return student, HTTPStatus.OK
 
@@ -107,20 +150,32 @@ class GetUpdateDelete(Resource):
     @jwt_required()
     def put(self, student_id):
         """
-            Update a student
+            Admin updates a student
         
         """
-        student_to_update = Student.get_by_id(student_id)
+        
+        
+        email = get_jwt_identity()
 
-        data = student_namespace.payload
+        current_user = Student.query.filter_by(email=email).first()
+        
+        
+        if current_user.id != 1:
+            return {'Message': 'You do not have access'}
+        
+        else:
+        
+            student_to_update = Student.get_by_id(student_id)
 
-        student_to_update.first_name = data['first_name']
-        student_to_update.last_name = data['last_name']
-        student_to_update.email = data['email']
+            data = student_namespace.payload
 
-        student_to_update.update()
+            student_to_update.first_name = data['first_name']
+            student_to_update.last_name = data['last_name']
+            student_to_update.email = data['email']
 
-        return student_to_update, HTTPStatus.OK
+            student_to_update.update()
+
+            return student_to_update, HTTPStatus.OK
 
 
 
@@ -129,14 +184,25 @@ class GetUpdateDelete(Resource):
     @jwt_required()
     def delete(self, student_id):
         """
-            Delete a student
+            Admin deletes a student
         
         """
-        student_to_delete = Student.get_by_id(student_id)
         
-        student_to_delete.delete()
+        email = get_jwt_identity()
 
-        return {"message": "Student deleted"}, HTTPStatus.OK
+        current_user = Student.query.filter_by(email=email).first()
+        
+        
+        if current_user.id != 1:
+            return {'Message': 'You do not have access'}
+        
+          
+        else:
+            student_to_delete = Student.get_by_id(student_id)
+        
+            student_to_delete.delete()
+
+            return {"message": "Student deleted"}, HTTPStatus.OK
     
    
 
@@ -154,22 +220,18 @@ class GetStudentGrades(Resource):
             Grades of a specific student
         
         """
-              
-        #student = Grade.get_by_id(student_id)
+        email = get_jwt_identity()
+
+        current_user = Student.query.filter_by(email=email).first()
         
-        grades = Grade.query.filter_by(student_id=student_id).all()
-
-        total_course_units = sum([grade.course_unit for grade in grades])
-        total_grade_points = sum([grade.student_grade * grade.course_unit for grade in grades])
-
-        student_gpa = total_grade_points / total_course_units if total_course_units > 0 else 0
-
-        for grade in grades:
-            grade.student_gpa = student_gpa
-            db.session.add(grade)
-            db.session.commit()
         
-        return grades, HTTPStatus.OK
+        if current_user == current_user:
+            student_courses = Grade.query.filter_by(student_id=student_id).all()
+        
+        else:
+            return {'Message':"Could not get this student's grades"}
+        
+        return student_courses, HTTPStatus.OK
     
     
 @student_namespace.route("/student/<int:student_id>/courses")
@@ -187,7 +249,10 @@ class GetStudentCourses(Resource):
         """
               
         #student = Grade.get_by_id(student_id)
+        try:
+            student_courses = Registration.query.filter_by(student_id=student_id).all()
         
-        student_courses = Registration.query.filter_by(student_id=student_id).all()
+        except:
+            return {'Message':"Could not get this student's courses"}
         
         return student_courses, HTTPStatus.OK

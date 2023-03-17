@@ -14,7 +14,7 @@ from flask_migrate import Migrate
 from flask_jwt_extended import JWTManager, verify_jwt_in_request, get_jwt, create_access_token
 from werkzeug.exceptions import NotFound, NotAcceptable, MethodNotAllowed
 
-def create_app(config=config_dict['dev']):
+def create_app(config=config_dict['prod']):
     app = Flask(__name__)
 
 
@@ -25,25 +25,6 @@ def create_app(config=config_dict['dev']):
     jwt = JWTManager(app)
 
     migrate = Migrate(app, db)
-
-
-
-    def admin_required():
-        def wrapper(fn):
-            @wraps(fn)
-            def decorator(*args, **kwargs):
-                verify_jwt_in_request()
-                claims = get_jwt()
-                if claims["is_administrator"]:
-                    return fn(*args, **kwargs)
-                else:
-                    return jsonify(msg="Admins only!"), 403
-
-            return decorator
-
-        return wrapper
-    
-
 
     authorizations = {
         'Bearer Auth':{
