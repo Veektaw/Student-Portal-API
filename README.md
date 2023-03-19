@@ -54,13 +54,13 @@ https://veektaw.pythonanywhere.com
 
 ## What I learned 🤝
 
-Marshalling
-Json
-API(S)
-RestX
-Many-to-many database relationship
-Deploying an API
-Unit Testing with Pytest
+> Marshalling
+> Json
+> API(S)
+> RestX
+> Many-to-many database relationship
+> Deploying an API
+> Unit Testing with Pytest
 
 ## Show your support
 
