@@ -35,7 +35,7 @@ def create_app(config=config_dict['prod']):
         }
     }
 
-    api = Api(app, title='Stdent portal API',
+    api = Api(app, title='Student portal API',
               description='A student portal API',
               version = 1.0,
               authorizations=authorizations,
