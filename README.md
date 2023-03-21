@@ -34,7 +34,7 @@ Must have `Python3.9` or newer, with pip installed.
 Clone this repo to your local directory, and open in your local intepreter.
 
 ### Install
-Open your terminal in your interpreter, use `pip install -r requirements.txt` to install everything in the requirements.txt file.
+Open your terminal in your interpreter, use `pip install -r requirements.txt` to install everything in the requirements.txt file. This repository does not come with a database, please install your own databse. When you install, the first user you register is `ADMIN` the rest are students. To install a database, use `export FLASK_APP=api` then enter `flask shell` then enter `db` press enter and use `db.create_all()`. Please go to the __init__.py file and change the config_dict to `test`, then go to the runserver.py file and change the config_dict to `test`.
 
 ### Usage
 After requirements have been installed, in your terminal, type in `python runserver.py` to run the app on local host.
