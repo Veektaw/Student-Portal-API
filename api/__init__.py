@@ -14,7 +14,7 @@ from flask_migrate import Migrate
 from flask_jwt_extended import JWTManager, verify_jwt_in_request, get_jwt, create_access_token
 from werkzeug.exceptions import NotFound, NotAcceptable, MethodNotAllowed
 
-def create_app(config=config_dict['prod']):
+def create_app(config=config_dict['test']):
     app = Flask(__name__)
 
 
