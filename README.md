@@ -13,7 +13,7 @@ Alt School Third Semester project
 > This is an API built with Flask RestX. This API is a student portal thatn enables students register to the school's databse, with their email and password. This API also gives the school or Admin the ability to register courses to the school's databse. This enables the students register for those courses. Admin also has the ability to enter student grades for each course. 
 
 # IMPORTANT
-> The school, Admin or `ID one(1)` is the only person that has access to routes like grade entry, registering courses to the database, deleting students, updating students information. 
+> The school, Admin or `ID one(1)` is the only person that has access to routes like grade entry, registering courses to the database, deleting students, updating students information. To log in as admin, `email = veektaw@gmail.com` `password = password` or `pass`
 >
 > Students can also see their GPA when they check their page **The GPA used is the 4.0 standard model `A = 4`, `B = 3`, `C = 2`, `D = 1`, `F = 0`** 
 ## Built With
